@@ -1,0 +1,36 @@
+services:
+  # NestJS 后端服务
+  backend:
+    build:
+      context: ../..  # 从 apps/backend 往上退两级，回到 reader-nodejs 根目录
+      dockerfile: apps/backend/Dockerfile
+    container_name: reader-nodejs-api
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+
+  # MySQL 数据库服务
+  mysql:
+    image: mysql:8.0
+    container_name: reader-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: always
+
+volumes:
+  mysql_data:
