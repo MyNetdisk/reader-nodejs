@@ -1,0 +1,62 @@
+# 在项目根目录（与 apps 平级）运行：docker compose up --build
+# 三个服务共享默认网络，可通过服务名互相访问：
+#   - backend 通过 `db:3306` 连接数据库
+#   - web    通过 `backend:3000` 调用后端（SSR）
+services:
+  # MySQL 数据库：最先启动，健康后才开始启动 backend
+  db:
+    image: mysql:8.0
+    container_name: reader-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: reader
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: always
+
+  # NestJS 后端：依赖 db 健康检查通过后启动，对外暴露 3000
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: reader-nodejs-api
+    ports:
+      - "3000:3000"
+    environment:
+      # 通过服务名 `db` 在内部网络访问数据库
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USERNAME: root
+      DB_PASSWORD: rootpassword
+      DB_DATABASE: reader
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+
+  # Next.js 前端：依赖 backend 启动后启动，对外暴露 3001
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: reader-nodejs-web
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: "3001"
+      HOSTNAME: "0.0.0.0"
+      # 服务端渲染时通过服务名 `backend` 在内部网络调用后端
+      API_URL: http://backend:3000
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  mysql_data:
