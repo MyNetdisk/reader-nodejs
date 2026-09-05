@@ -13,6 +13,18 @@ services:
       mysql:
         condition: service_healthy
     restart: always
+  
+  # Next.js 前端服务
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+    container_name: reader-nodejs-web
+    ports:
+      - "3001:3001"
+    depends_on:
+      - backend
+    restart: always
 
   # MySQL 数据库服务
   mysql:
