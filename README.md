@@ -50,10 +50,10 @@ reader-nodejs/
 
 项目提供两种运行方式，**互为独立、二选一**，请根据场景选择：
 
-- **方式一：本地开发** —— 直接在宿主机用 Node + pnpm 启动，热重载快，适合日常开发联调。需要本机已安装并运行 MySQL。
+- **方式一：本地开发** —— 直接在宿主机用 Node + pnpm 启动，热重载快，适合日常开发联调。使用项目内置的便携 MySQL，无需本机预装。
 - **方式二：Docker 部署** —— 一条命令把 backend、web、MySQL 全部容器化拉起，无需本机预装 MySQL，适合集成测试 / 生产部署 / 干净环境复现。
 
-> 两种方式的区别、服务名互通、环境变量等细节见 [docs/docker.md](./docs/docker.md)。
+> 两种方式的区别、服务名互通、环境变量等细节见 [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)。
 
 ---
 
@@ -63,7 +63,9 @@ reader-nodejs/
 
 - Node.js 18+
 - pnpm 9+
-- MySQL 8.0+（本机或可访问的实例，需按 `apps/backend/src/app.module.ts` 中的 `DB_*` 环境变量配置连接）
+- 项目内置便携版 MySQL 8.0（解压在 `db/mysql/`，免安装、免系统服务），无需本机预装 MySQL
+
+> 首次使用需先准备好 `db/mysql/`，详见 [docs/MYSQL_SETUP.md](./docs/MYSQL_SETUP.md)。
 
 #### 安装依赖
 
@@ -71,18 +73,55 @@ reader-nodejs/
 pnpm install
 ```
 
+#### 数据库配置
+
+后端通过 `apps/backend/.env` 中的 `DB_*` 环境变量连接数据库，默认值已与内置 MySQL 对齐：
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `DB_HOST` | `localhost` | |
+| `DB_PORT` | `3306` | 与 `db/my.ini` 的 `port` 一致 |
+| `DB_USERNAME` | `root` | |
+| `DB_PASSWORD` | `password` | 首次初始化后需设置，见 [docs/MYSQL_SETUP.md](./docs/MYSQL_SETUP.md) 第四步 |
+| `DB_DATABASE` | `reader` | `pnpm dev` 启动时自动创建 |
+
+> 配置文件 `db/my.ini`、数据目录 `db/data/`、PID 文件 `db/.mysqld.pid` 都集中在根目录 `db/` 下，已被 `.gitignore` 忽略。
+
 #### 启动开发环境
 
 ```bash
-# 启动所有应用（并行）
-pnpm run dev
-
-# 仅启动后端
-pnpm turbo run dev --filter=backend
-
-# 仅启动 Web 端
-pnpm turbo run dev --filter=web
+# 一键启动（推荐）：自动按顺序启动 MySQL → 确保 reader 库存在 → 启动 backend + web
+# Ctrl+C 退出时会自动停止本脚本拉起的 MySQL 进程
+pnpm dev
 ```
+
+也可单独控制数据库：
+
+```bash
+pnpm db:start     # 后台启动 MySQL，等待 3306 就绪，写 PID 文件
+pnpm db:status    # 探测 MySQL 是否在运行
+pnpm db:stop      # 停止由 db:start 拉起的 MySQL
+```
+
+单独启动某个应用（需先 `pnpm db:start`）：
+
+```bash
+pnpm turbo run dev --filter=backend   # 仅启动后端
+pnpm turbo run dev --filter=web       # 仅启动 Web 端
+```
+
+#### 访问地址
+
+本地开发启动后：
+
+| 服务 | 地址 | 说明 |
+|------|------|------|
+| Web 前端 | http://localhost:3001 | Next.js（App Router） |
+| Backend API | http://localhost:3000 | NestJS，全局前缀 `/api/v1` |
+| Swagger 文档 | http://localhost:3000/api-docs | 由 `@nestjs/swagger` 自动生成 |
+| MySQL | localhost:3306 | root / password，库名 `reader` |
+
+> H5 端、App 端目前为规划中（`apps/h5`、`apps/app` 为空占位），暂无访问地址。
 
 #### 构建
 
@@ -153,7 +192,7 @@ docker compose down
 docker compose down -v
 ```
 
-更多命令、环境变量、常见问题见 [docs/docker.md](./docs/docker.md)。
+更多命令、环境变量、常见问题见 [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)。
 
 ## 开发规范
 
