@@ -32,6 +32,10 @@ reader-nodejs/
 │   ├── api-types/      # 前后端共享的 API 类型定义
 │   ├── utils/          # 共享工具函数
 │   └── constants/      # 共享常量
+├── db/                 # 本地 MySQL 配置与数据
+│   ├── mysql/          # MySQL 解压文件（gitignore，需自行下载）
+│   ├── data/           # 数据目录（gitignore，初始化后生成）
+│   └── my.ini          # MySQL 配置（端口 3306、utf8mb4、InnoDB）
 ├── docs/               # 项目文档
 ├── scripts/            # 构建/部署脚本
 ├── docker-compose.yml  # 根级 Docker Compose 编排（backend + web + db）
@@ -39,6 +43,8 @@ reader-nodejs/
 ├── pnpm-workspace.yaml # pnpm workspace 配置
 └── package.json        # 根级依赖和脚本
 ```
+
+> `db/mysql/` 与 `db/data/` 已加入 `.gitignore`，不会提交到远程仓库。克隆后需按 [docs/MYSQL_SETUP.md](./docs/MYSQL_SETUP.md) 准备。
 
 ### 架构说明
 
