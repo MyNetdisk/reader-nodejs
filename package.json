@@ -5,10 +5,13 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "dev": "turbo run dev",
+    "dev": "node scripts/dev.js",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
+    "db:start": "node scripts/db.js start",
+    "db:stop": "node scripts/db.js stop",
+    "db:status": "node scripts/db.js status",
     "prepare": "husky"
   },
   "keywords": [],
